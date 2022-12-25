@@ -76,7 +76,7 @@ int main(int argc, char** argv){
                 case SDL_MOUSEBUTTONDOWN:
                     center->y += 5;
                     break;
-                    
+
                 default:
                     break;
             }
@@ -120,9 +120,6 @@ int main(int argc, char** argv){
 
         SDL_RenderPresent(renderer);
     }
-    
-    freePolygon(&polygonOne);
-    freePolygon(&polygonTwo);
 
     return 0;
 }
