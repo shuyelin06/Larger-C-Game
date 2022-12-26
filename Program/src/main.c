@@ -38,14 +38,14 @@ int main(int argc, char** argv){
     // Keyboard State
     const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
 
-    // Entities
-    Entity *entityOne = newEntity(3);
+    // List of Entities
+    Entity *entityOne = newEntity(6);
     entityOne->position->x = SCREEN_CENTER_X - 100;
     entityOne->position->y = SCREEN_CENTER_Y;
 
     polygonRandom(entityOne->hitbox, 10);
 
-    Entity *entityTwo = newEntity(4);
+    Entity *entityTwo = newEntity(8);
     entityTwo->position->x = SCREEN_CENTER_X;
     entityTwo->position->y = SCREEN_CENTER_Y;
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv){
             entityUpdate(entityOne, time - lastUpdate);
             entityUpdate(entityTwo, time - lastUpdate);
 
-            polygonRotate(entityOne->hitbox, 0.001);
+            // polygonRotate(entityOne->hitbox, 0.001);
 
             intersect = entityIntersection(entityOne, entityTwo);
 

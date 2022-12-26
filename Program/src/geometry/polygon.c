@@ -7,8 +7,6 @@
 // Needed for memory management
 #include <stdlib.h>
 
-#include <stdio.h>
-
 // Rotate a polygon counterclockwise about it's center
 void polygonRotate(const Polygon* polygon, double theta) {
     // Obtain the polygon's vertices
@@ -64,7 +62,7 @@ static inline double vectorDot(const Vector* vectorOne, const Vector* vectorTwo)
 // Projects a polygon onto some axis line, and returns the interval it spans
 static Interval projectOntoAxis(const Polygon* polygon, const Vector* axis) {
     // Instantiate a projection
-    Interval projection = {DBL_MAX, DBL_MIN};
+    Interval projection = {DBL_MAX, -DBL_MAX};
 
     // Project all edges of the polygon onto the axis
     Vector* center = polygon->center; // Obtain the polygon's center

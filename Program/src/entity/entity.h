@@ -4,6 +4,9 @@
 
 #include "../geometry/polygon.h"
 
+#define ENTITY_LAND 0
+#define ENTITY_OBJECT 1
+
 typedef struct _Entity Entity;
 
 struct _Entity {
