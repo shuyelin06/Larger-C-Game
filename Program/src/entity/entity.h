@@ -2,7 +2,8 @@
 
 #include <stdlib.h>
 
-#include "../geometry/polygon.h"
+#include <geometry/polygon.h>
+#include <settings.h>
 
 #define ENTITY_LAND 0
 #define ENTITY_OBJECT 1

@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-#include "../settings.h"
+#include <settings.h>
 
 // Render a Polygon using SDL2
 void renderPolygon(SDL_Renderer *renderer, const Polygon *polygon) {

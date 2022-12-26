@@ -5,11 +5,11 @@
 #include <math.h>
 #include <time.h>
 
-#include "settings.h"
+#include <settings.h>
 
-#include "geometry/polygon.h"
-#include "graphics/graphics.h"
-#include "entity/entity.h"
+#include <geometry/polygon.h>
+#include <graphics/graphics.h>
+#include <entity/entity.h>
 
 int main(int argc, char** argv){
     // Initialize Random Number Generator 
@@ -35,22 +35,33 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    // Keyboard State
-    const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
+    
 
     // List of Entities
     Entity *entityOne = newEntity(6);
-    entityOne->position->x = SCREEN_CENTER_X - 100;
+    entityOne->position->x = SCREEN_CENTER_X - 25;
     entityOne->position->y = SCREEN_CENTER_Y;
 
-    polygonRandom(entityOne->hitbox, 10);
+    polygonRandom(entityOne->hitbox, 5);
 
     Entity *entityTwo = newEntity(8);
     entityTwo->position->x = SCREEN_CENTER_X;
     entityTwo->position->y = SCREEN_CENTER_Y;
 
-    polygonRandom(entityTwo->hitbox, 10);
+    polygonRandom(entityTwo->hitbox, 5);
     
+    // Keyboard State
+    const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
+
+    // Player Entity (Controllable)
+    Entity *player = entityOne;
+
+    // List of Entities
+    Entity *entities[2];
+    entities[0] = player; // Player will always be the first entity
+    entities[1] = entityTwo;
+    
+
     // Time Elapsed
     Uint64 lastUpdate = SDL_GetTicks64();
 
@@ -69,8 +80,8 @@ int main(int argc, char** argv){
         }
         
         // Keyboard Input
-        if ( keyboard[SDL_SCANCODE_W] )
-            entityOne->velocity->y = 25;
+        if ( keyboard[SDL_SCANCODE_W] ) {
+            entityOne->velocity->y = 25;}
         if ( keyboard[SDL_SCANCODE_A] )
             entityOne->velocity->x = -25;
         if ( keyboard[SDL_SCANCODE_S] )
@@ -84,8 +95,10 @@ int main(int argc, char** argv){
         Uint64 time = SDL_GetTicks64();
         // If change in time is sufficiently large, update the entities
         if ( time - lastUpdate > 0 ) {
-            entityUpdate(entityOne, time - lastUpdate);
-            entityUpdate(entityTwo, time - lastUpdate);
+            int numEntities = sizeof(entities) / sizeof(entities[0]);
+            for ( int i = 0; i < numEntities; i++ ) {
+                entityUpdate(entities[i], time - lastUpdate);
+            }
 
             // polygonRotate(entityOne->hitbox, 0.001);
 

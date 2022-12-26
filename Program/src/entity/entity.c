@@ -50,11 +50,15 @@ int entityIntersection(const Entity *e1, const Entity *e2) {
 
 // Update an entity
 void entityUpdate(const Entity *e, int milliElapsed) {
+    // Update Velocities (Friction, Gravity)
+    e->velocity->x -= (e->velocity->x * FRICTION_COEF * milliElapsed / 1000);
+    e->velocity->y -= (GRAVITY * milliElapsed / 1000.);
+    
     // Update position
     e->position->x += (e->velocity->x * milliElapsed / 1000);
     e->position->y += (e->velocity->y * milliElapsed / 1000);
     
-    // Reset velocities
-    e->velocity->x = 0;
-    e->velocity->y = 0;
+    if ( e->position->y < SCREEN_CENTER_Y ) {
+        e->position->y = SCREEN_CENTER_Y;
+    }
 }
