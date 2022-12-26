@@ -1,68 +1,58 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 
-#include "geometry/polygon.h"
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
 
-#define SCREEN_WIDTH 1280 
-#define SCREEN_HEIGHT 720
+#include "settings.h"
+
+#include "geometry/polygon.h"
+#include "graphics/graphics.h"
+#include "entity/entity.h"
 
 int main(int argc, char** argv){
+    // Initialize Random Number Generator 
+    srand(time(NULL));
+
+    // Initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
         printf("Error: SDL failed to initialize\nSDL Error: '%s'\n", SDL_GetError());
         return 1;
     }
 
+    // Initialize Window
     SDL_Window *window = SDL_CreateWindow("SLD test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if(!window){
         printf("Error: Failed to open window\nSDL Error: '%s'\n", SDL_GetError());
         return 1;
     }
 
+    // Initialize Renderer
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!renderer){
         printf("Error: Failed to create renderer\nSDL Error: '%s'\n", SDL_GetError());
         return 1;
     }
 
-    // ---
-    Vector* center = malloc(sizeof(Vector));
-    center->x = SCREEN_WIDTH / 2;
-    center->y = SCREEN_HEIGHT / 2 - 5;
+    // Keyboard State
+    const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
 
-    Polygon polygonOne;
-    polygonOne.center = center;
-    printf("%d", polygonOne.center->x);
-    polygonOne.numEdges = 3;
-    polygonOne.edges = malloc(sizeof(Vector) * (3 + 1));
+    // Entities
+    Entity *entityOne = newEntity(3);
+    entityOne->position->x = SCREEN_CENTER_X - 100;
+    entityOne->position->y = SCREEN_CENTER_Y;
 
-    Vector v1 = {-50, 0};
-    Vector v2 = {-50, 50};
-    Vector v3 = {50, 50};
-    Vector v4 = {-50, 0};
-    polygonOne.edges[0] = v1;
-    polygonOne.edges[1] = v2;
-    polygonOne.edges[2] = v3;
-    polygonOne.edges[3] = v4;
+    polygonRandom(entityOne->hitbox, 10);
 
-    // printf("%d", polygonOne.edges[0].x);
-    // ---
-    Vector* center2 = malloc(sizeof(Vector));
-    center2->x = SCREEN_WIDTH - 200;
-    center2->y = SCREEN_HEIGHT / 2;
+    Entity *entityTwo = newEntity(4);
+    entityTwo->position->x = SCREEN_CENTER_X;
+    entityTwo->position->y = SCREEN_CENTER_Y;
 
-    Polygon polygonTwo;
-    polygonTwo.center = center2;
-    polygonTwo.numEdges = 3;
-    polygonTwo.edges = malloc(sizeof(Vector) * (3 + 1));
-
-    Vector _v1 = {-50, 0};
-    Vector _v2 = {-50, 50};
-    Vector _v3 = {50, 50};
-    Vector _v4 = {-50, 0};
-    polygonTwo.edges[0] = _v1;
-    polygonTwo.edges[1] = _v2;
-    polygonTwo.edges[2] = _v3;
-    polygonTwo.edges[3] = _v4;
+    polygonRandom(entityTwo->hitbox, 10);
+    
+    // Time Elapsed
+    Uint64 lastUpdate = SDL_GetTicks64();
 
     int running = 0;
     while(running == 0){
@@ -73,53 +63,59 @@ int main(int argc, char** argv){
                     running = 1;
                     break;
 
-                case SDL_MOUSEBUTTONDOWN:
-                    center->y += 5;
-                    break;
-
                 default:
                     break;
             }
         }
-
         
-        // printf("SKSKS");
-        if ( polygonIntersection(&polygonOne, &polygonTwo) ) {
-            // printf("Intersect");
-        } else {
-            // printf("Do not intersect");
-            
-            center2->x -= 0.5;
+        // Keyboard Input
+        if ( keyboard[SDL_SCANCODE_W] )
+            entityOne->velocity->y = 25;
+        if ( keyboard[SDL_SCANCODE_A] )
+            entityOne->velocity->x = -25;
+        if ( keyboard[SDL_SCANCODE_S] )
+            entityOne->velocity->y = -25;
+        if ( keyboard[SDL_SCANCODE_D] )
+            entityOne->velocity->x = 25;
+
+        int intersect;
+
+        // Update Timer
+        Uint64 time = SDL_GetTicks64();
+        // If change in time is sufficiently large, update the entities
+        if ( time - lastUpdate > 0 ) {
+            entityUpdate(entityOne, time - lastUpdate);
+            entityUpdate(entityTwo, time - lastUpdate);
+
+            polygonRotate(entityOne->hitbox, 0.001);
+
+            intersect = entityIntersection(entityOne, entityTwo);
+
+            lastUpdate = time;
         }
 
+        // Rendering
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
         SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-        for ( int i = 0; i < polygonOne.numEdges; i++ ) {
-            Vector one = polygonOne.edges[i];
-            Vector two = polygonOne.edges[i + 1];
-
-            SDL_RenderDrawLine(renderer, 
-                polygonOne.center->x + one.x, 
-                polygonOne.center->y + one.y, 
-                polygonOne.center->x + two.x, 
-                polygonOne.center->y + two.y);
-        }
-        SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
-        for ( int i = 0; i < polygonTwo.numEdges; i++ ) {
-            Vector one = polygonTwo.edges[i];
-            Vector two = polygonTwo.edges[i + 1];
-
-            SDL_RenderDrawLine(renderer, 
-                polygonTwo.center->x + one.x, 
-                polygonTwo.center->y + one.y, 
-                polygonTwo.center->x + two.x, 
-                polygonTwo.center->y + two.y);
+        renderPolygon(renderer, entityOne->hitbox);
+        
+        if ( intersect ) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            renderPolygon(renderer, entityTwo->hitbox);
+        } else {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+            renderPolygon(renderer, entityTwo->hitbox);
         }
 
         SDL_RenderPresent(renderer);
     }
 
+    free(entityOne);
+    free(entityTwo);
+
+    SDL_DestroyRenderer(renderer);
+    
     return 0;
 }

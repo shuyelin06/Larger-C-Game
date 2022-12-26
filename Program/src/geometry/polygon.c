@@ -2,6 +2,48 @@
 
 // Needed for double max and min values
 #include <float.h>
+// Needed for sin and cos trig functions
+#include <math.h> 
+// Needed for memory management
+#include <stdlib.h>
+
+#include <stdio.h>
+
+// Rotate a polygon counterclockwise about it's center
+void polygonRotate(const Polygon* polygon, double theta) {
+    // Obtain the polygon's vertices
+    Vector* edges = polygon->edges; 
+
+    // Iterate through each vertex
+    for ( int i = 0; i < polygon->numEdges + 1; i++ ) {
+        // Obtain the original x and y coordinates
+        double x = edges[i].x;
+        double y = edges[i].y;
+
+        // Rotate each vertex
+        edges[i].x = x * cos(theta) - y * sin(theta);
+        edges[i].y = x * sin(theta) + y * cos(theta);
+    }
+}
+
+/* Defining Helper Functions for Random Polygon */
+// Creates a random convex polygon
+void polygonRandom(Polygon* polygon, double size) {
+    // Obtain the polygon's edges
+    Vector* edges = polygon->edges;
+
+    // Randomize the polygon vertices, but while ensuring the polygon stays convex
+    double angleInc = 2 * 3.14159 / polygon->numEdges;
+    for ( int i = 0; i < polygon->numEdges; i++ ) {
+        double angle = angleInc * i + ( rand() % 11 + 1. ) / 10. * angleInc;
+
+        edges[i].x = size * cos(angle);
+        edges[i].y = size * sin(angle);
+    }
+    // Ensure the beginning and end vertex of the array are the same
+    edges[polygon->numEdges].x = edges[0].x;
+    edges[polygon->numEdges].y = edges[0].y;
+}
 
 /* Defining Helper Structs and Functions for Polygon Intersection */
 // Struct Interval
@@ -14,22 +56,13 @@ struct _Interval {
     double max;         // Right Bound
 };
 
-// Struct Line
-// Represents a line, with a point and directional vector.
-typedef struct _Line Line;
-
-struct _Line {
-    Vector point;       // Reference Point
-    Vector direction;   // Directional Vector
-};
-
 // Returns the dot product of two vectors (to be used in projections) 
 static inline double vectorDot(const Vector* vectorOne, const Vector* vectorTwo) {
     return ((vectorOne->x * vectorTwo->x) + (vectorOne->y * vectorTwo->y));
 }
 
 // Projects a polygon onto some axis line, and returns the interval it spans
-static Interval projectOntoAxis(const Polygon* polygon, const Line* axis) {
+static Interval projectOntoAxis(const Polygon* polygon, const Vector* axis) {
     // Instantiate a projection
     Interval projection = {DBL_MAX, DBL_MIN};
 
@@ -40,13 +73,13 @@ static Interval projectOntoAxis(const Polygon* polygon, const Line* axis) {
     // Iterate through all of the polygon's edges
     for ( int i = 0; i < polygon->numEdges; i++ ) {
         // Find the vertex of the polygon relative to the axis line
-        Vector relativeToAxis = {
-            center->x + edges[i].x - axis->point.x, // X-Coordinate
-            center->y + edges[i].y - axis->point.y  // Y-Coordinate
+        Vector vertex = {
+            center->x + edges[i].x, // X-Coordinate
+            center->y + edges[i].y  // Y-Coordinate
         };
 
         // Project that vertex onto the axis line
-        double proj = (vectorDot(&(axis->direction), &relativeToAxis) / vectorDot(&(axis->direction), &axis->direction));
+        double proj = vectorDot(axis, &vertex);
 
         // Update the interval minimum and maximum, as appropriate
         if ( proj < projection.min ) // Updating the minimum
@@ -63,65 +96,49 @@ static Interval projectOntoAxis(const Polygon* polygon, const Line* axis) {
 static int doProjectionsOverlap(const Interval projectionOne, const Interval projectionTwo) {
     // If either interval is outside the other, return false (0)
     if ( projectionOne.max < projectionTwo.min || projectionTwo.max < projectionOne.min )
-        return 0;
+        return NOINTERSECTION;
     // Otherwise, intervals must overlap, so return true (1)
-    else
-        return 1;
+    else {
+        return INTERSECTION;
+    }
 }
 
 // Check if two polygons intersect
 int polygonIntersection(const Polygon* polygonOne, const Polygon* polygonTwo) {
-    Vector* center; // Reference to a polygon's center
-    Vector* edges; // Reference to a polygon's edges
-
     // Check for intersection along the first polygon's edge axes 
-    center = polygonOne->center;
-    edges = polygonOne->edges;
-
+    Vector* edgesOne = polygonOne->edges;
     for ( int i = 0; i < polygonOne->numEdges; i++ ) {
         // Find the axis perpendicular to the polygon's edge
-        Line axis = {
-            center->x + edges[i].x, // X-Coordinate
-            center->y + edges[i].y, // Y-Coordinate
-            {
-                -(edges[i+1].y - edges[i].y), // Directional Vector X
-                edges[i+1].x - edges[i].x // Directional Vector Y
-            }
+        Vector axis = {
+            (edgesOne[i+1].y - edgesOne[i].y), // Directional Vector X
+            (edgesOne[i].x - edgesOne[i+1].x) // Directional Vector Y
         };
 
-        // Project both polygons onto this axis
-        Interval projectionOne = projectOntoAxis(polygonOne, &axis);
-        Interval projectionTwo = projectOntoAxis(polygonTwo, &axis);
-
-        // Check if the projections overlap
+        // Project both polygons onto this axis and check if they overlap
         // If they don't, the polygons cannot intersect by the separating axis theorem
-        if ( !doProjectionsOverlap(projectionOne, projectionTwo) ) {
+        int projectionOverlap = doProjectionsOverlap( 
+                                        projectOntoAxis(polygonOne, &axis), 
+                                        projectOntoAxis(polygonTwo, &axis) ); 
+        if ( projectionOverlap == NOINTERSECTION ) {
             return NOINTERSECTION;
         }
     }
 
     // Check for intersection along the second polygon's edge axes 
-    edges = polygonTwo->edges;
-    center = polygonTwo->center;
-
+    Vector* edgesTwo = polygonTwo->edges;
     for ( int i = 0; i < polygonTwo->numEdges; i++ ) {
         // Find the axis perpendicular to the polygon's edge
-        Line axis = {
-            center->x + edges[i].x, // X-Coordinate
-            center->y + edges[i].y, // Y-Coordinate
-            {
-                -(edges[i+1].y - edges[i].y), // Directional Vector X
-                edges[i+1].x - edges[i].x // Directional Vector Y
-            }
+        Vector axis = {
+            (edgesTwo[i+1].y - edgesTwo[i].y), // Directional Vector X
+            (edgesTwo[i].x - edgesTwo[i+1].x) // Directional Vector Y
         };
 
-        // Project both polygons onto this axis
-        Interval projectionOne = projectOntoAxis(polygonOne, &axis);
-        Interval projectionTwo = projectOntoAxis(polygonTwo, &axis);
-
-        // Check if the projections overlap
+        // Project both polygons onto this axis and check if they overlap
         // If they don't, the polygons cannot intersect by the separating axis theorem
-        if ( !doProjectionsOverlap(projectionOne, projectionTwo) ) {
+        int projectionOverlap = doProjectionsOverlap( 
+                                        projectOntoAxis(polygonOne, &axis), 
+                                        projectOntoAxis(polygonTwo, &axis) ); 
+        if ( projectionOverlap == NOINTERSECTION ) {
             return NOINTERSECTION;
         }
     }
