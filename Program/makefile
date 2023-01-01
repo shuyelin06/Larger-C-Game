@@ -8,7 +8,7 @@ INCLUDE		= -I./include -I./src
 # Library Path
 LIB			= -L./lib
 # Library Files
-LIBPATH 	:= -lmingw32 -lSDL2main -lSDL2
+LIBPATH 	:= -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 # Source Files 
 SOURCES		:= main.c geometry/polygon.c entity/entity.c graphics/graphics.c

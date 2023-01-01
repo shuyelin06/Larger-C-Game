@@ -23,4 +23,5 @@ bin/main.o: src/main.c include/SDL2/SDL.h include/SDL2/SDL_main.h \
  include/SDL2/SDL_shape.h include/SDL2/SDL_system.h \
  include/SDL2/SDL_timer.h include/SDL2/SDL_version.h \
  include/SDL2/SDL_locale.h include/SDL2/SDL_misc.h src/settings.h \
- src/geometry/polygon.h src/graphics/graphics.h src/entity/entity.h
+ src/geometry/polygon.h src/graphics/graphics.h src/entity/entity.h \
+ include/SDL2/SDL_image.h include/SDL2/SDL.h

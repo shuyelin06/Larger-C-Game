@@ -11,6 +11,8 @@
 #include <graphics/graphics.h>
 #include <entity/entity.h>
 
+#include <SDL2/SDL_image.h>
+
 int main(int argc, char** argv){
     // Initialize Random Number Generator 
     srand(time(NULL));
@@ -28,12 +30,29 @@ int main(int argc, char** argv){
         return 1;
     }
 
+    if ( IMG_Init(IMG_INIT_PNG) == 0 ) {
+        printf("Image fail");
+        return 1;
+    }
+    SDL_Surface* sur = IMG_Load("C:\\Users\\shuye\\Documents\\GitHub\\Larger-C-Game\\Program\\src\\pineapple.png");
+    if (sur == NULL) {
+	    printf("Error loading image");
+	    return 5;
+    }
+    
+
     // Initialize Renderer
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!renderer){
         printf("Error: Failed to create renderer\nSDL Error: '%s'\n", SDL_GetError());
         return 1;
     }
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, sur);
+    if (tex == NULL) {
+	    printf("Error creating texture");
+	    return 6;
+    }
+    SDL_FreeSurface(sur);
 
     
 
@@ -121,14 +140,20 @@ int main(int argc, char** argv){
             SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
             renderPolygon(renderer, entityTwo->hitbox);
         }
-
+        SDL_Rect rect = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 50, 50};
+        SDL_RenderCopy(renderer, tex, NULL, &rect);
         SDL_RenderPresent(renderer);
     }
 
     free(entityOne);
     free(entityTwo);
 
+    SDL_DestroyTexture(tex);
     SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     
+    IMG_Quit();
+    SDL_Quit();
+
     return 0;
 }
